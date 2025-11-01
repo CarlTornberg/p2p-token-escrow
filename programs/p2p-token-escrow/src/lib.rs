@@ -4,6 +4,8 @@ declare_id!("BNVdmmxsCQiyPkTEFGg7SxkuRWZ2MiMyYamQnYu2wiPN");
 
 mod states;
 pub use states::*;
+mod errors;
+pub use errors::*;
 
 mod instructions;
 pub use instructions::*;
@@ -12,11 +14,15 @@ pub use instructions::*;
 pub mod p2p_token_escrow {
     use super::*;
 
-    pub fn make(ctx: Context<CreateMake>, seed: u64, give: u64, receive: u64) -> Result<()> {
-        instructions::create_make(ctx, seed, give, receive)
+    pub fn make(ctx: Context<CreateMake>, seed: u64, maker_offer: u64, maker_ask: u64) -> Result<()> {
+        instructions::create_make(ctx, seed, maker_offer, maker_ask)
     }
 
     pub fn refund(ctx: Context<RefundMake>, seed: u64) -> Result<()> {
         instructions::refund_make(ctx, seed)
+    }
+
+    pub fn take(ctx: Context<TakeMake>, seed: u64, maker_offer: u64, maker_ask: u64) -> Result<()> {
+        instructions::take_make(ctx, seed, maker_offer, maker_ask)
     }
 }

@@ -8,14 +8,14 @@ pub const ESCROW_VAULT_SEED: &[u8] = b"escrow_vault";
 pub struct Escrow {
 
     pub maker: Pubkey,
-    pub mint_a: Pubkey,
-    pub mint_b: Pubkey,
+    pub mint_maker: Pubkey,
+    pub mint_taker: Pubkey,
 
-    pub mint_a_token_program: Pubkey,
-    pub mint_b_token_program: Pubkey,
+    pub mint_maker_token_program: Pubkey,
+    pub mint_taker_token_program: Pubkey,
 
-    pub give: u64,
-    pub receive: u64,
+    pub maker_offer: u64,
+    pub maker_ask: u64,
     pub bump: u8,
 }
 

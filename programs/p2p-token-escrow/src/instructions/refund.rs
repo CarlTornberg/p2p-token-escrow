@@ -18,8 +18,8 @@ pub fn refund_make(ctx: Context<RefundMake>, seed: u64) -> Result<()> {
     let cpi_accounts = token_interface::TransferChecked {
         from: ctx.accounts.escrow_vault.to_account_info(),
         authority: ctx.accounts.escrow.to_account_info(),
-        to: ctx.accounts.maker_ata_a.to_account_info(),
-        mint: ctx.accounts.mint_a.to_account_info(),
+        to: ctx.accounts.maker_ata.to_account_info(),
+        mint: ctx.accounts.mint.to_account_info(),
     };
 
     let cpi_context = CpiContext::new(
@@ -29,7 +29,7 @@ pub fn refund_make(ctx: Context<RefundMake>, seed: u64) -> Result<()> {
     token_interface::transfer_checked(
         cpi_context, 
         escrow_vault.amount, 
-        ctx.accounts.mint_a.decimals
+        ctx.accounts.mint.decimals
     )?;
         
     // Close ATA
@@ -57,11 +57,11 @@ pub struct RefundMake<'info> {
     
     #[account(
         mut,
-        associated_token::mint = mint_a,
+        associated_token::mint = mint,
         associated_token::authority = maker,
         associated_token::token_program = token_program,
     )]
-    maker_ata_a: InterfaceAccount<'info, TokenAccount>,
+    maker_ata: InterfaceAccount<'info, TokenAccount>,
 
     #[account(
         mut,
@@ -73,7 +73,7 @@ pub struct RefundMake<'info> {
 
     #[account(
         mut,
-        associated_token::mint = mint_a,
+        associated_token::mint = mint,
         associated_token::authority = escrow,
         associated_token::token_program = token_program,
     )]
@@ -82,12 +82,7 @@ pub struct RefundMake<'info> {
     #[account(
         token::token_program = token_program,
     )]
-    mint_a: InterfaceAccount<'info, Mint>,
-
-    #[account(
-        token::token_program = token_program,
-    )]
-    mint_b: InterfaceAccount<'info, Mint>,
+    mint: InterfaceAccount<'info, Mint>,
 
     system_program: Program<'info, System>,
     token_program: Interface<'info, TokenInterface>,

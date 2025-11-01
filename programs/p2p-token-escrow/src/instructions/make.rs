@@ -3,27 +3,26 @@ use anchor_spl::{associated_token::AssociatedToken, token_interface::*};
 
 use crate::{Escrow, ESCROW_SEED};
 
-pub fn create_make(ctx: Context<CreateMake>, seed: u64, give: u64, receive: u64) -> Result<()> {
+pub fn create_make(ctx: Context<CreateMake>, seed: u64, maker_offer: u64, maker_ask: u64) -> Result<()> {
 
     ctx.accounts.escrow.set_inner(Escrow { 
             maker: ctx.accounts.maker.key(), 
-            mint_a: ctx.accounts.mint_a.key(), 
-            mint_b: ctx.accounts.mint_b.key(), 
-            mint_a_token_program: ctx.accounts.token_program.key(), 
-            mint_b_token_program: ctx.accounts.token_program.key(), // TODO Add ability to set mint
-            // B token program.
-            give, 
-            receive, 
+            mint_maker: ctx.accounts.mint_maker.key(), 
+            mint_taker: ctx.accounts.mint_taker.key(), 
+            mint_maker_token_program: ctx.accounts.mint_maker_token_program.key(), 
+            mint_taker_token_program: ctx.accounts.mint_taker_token_program.key(),
+            maker_offer, 
+            maker_ask, 
             bump: ctx.bumps.escrow,
         });
     let escrow = &ctx.accounts.escrow;
 
     msg!("Created escrow {} trading {} of mint {} for {} of mint {}.",
         escrow.key(),
-        escrow.receive,
-        escrow.mint_b.key(),
-        escrow.give,
-        escrow.mint_a.key(),
+        escrow.maker_ask,
+        escrow.mint_taker.key(),
+        escrow.maker_offer,
+        escrow.mint_maker.key(),
     ); 
 
     Ok(())
@@ -38,11 +37,11 @@ pub struct CreateMake<'info> {
     #[account(
         init_if_needed,
         payer = maker,
-        associated_token::mint = mint_a,
+        associated_token::mint = mint_maker,
         associated_token::authority = maker,
-        associated_token::token_program = token_program,
+        associated_token::token_program = mint_maker_token_program,
     )]
-    maker_ata_a: InterfaceAccount<'info, TokenAccount>,
+    maker_ata: InterfaceAccount<'info, TokenAccount>,
 
     #[account(
         init,
@@ -56,23 +55,24 @@ pub struct CreateMake<'info> {
     #[account(
         init,
         payer = maker,
-        associated_token::mint = mint_a,
+        associated_token::mint = mint_maker,
         associated_token::authority = escrow,
-        associated_token::token_program = token_program,
+        associated_token::token_program = mint_maker_token_program,
     )]
     escrow_vault: InterfaceAccount<'info, TokenAccount>,
 
     #[account(
-        token::token_program = token_program,
+        token::token_program = mint_maker_token_program,
     )]
-    mint_a: InterfaceAccount<'info, Mint>,
+    mint_maker: InterfaceAccount<'info, Mint>,
 
     #[account(
-        token::token_program = token_program,
+        token::token_program = mint_taker_token_program,
     )]
-    mint_b: InterfaceAccount<'info, Mint>,
+    mint_taker: InterfaceAccount<'info, Mint>,
 
     system_program: Program<'info, System>,
-    token_program: Interface<'info, TokenInterface>,
+    mint_maker_token_program: Interface<'info, TokenInterface>,
+    mint_taker_token_program: Interface<'info, TokenInterface>,
     associated_token_program: Program<'info, AssociatedToken>
 }
