@@ -12,11 +12,11 @@ pub use instructions::*;
 pub mod p2p_token_escrow {
     use super::*;
 
-    pub fn initialize(ctx: Context<Initialize>) -> Result<()> {
-        msg!("Greetings from: {:?}", ctx.program_id);
-        Ok(())
+    pub fn make(ctx: Context<CreateMake>, seed: u64, give: u64, receive: u64) -> Result<()> {
+        instructions::create_make(ctx, seed, give, receive)
+    }
+
+    pub fn refund(ctx: Context<RefundMake>, seed: u64) -> Result<()> {
+        instructions::refund_make(ctx, seed)
     }
 }
-
-#[derive(Accounts)]
-pub struct Initialize {}
