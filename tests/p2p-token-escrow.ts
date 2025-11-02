@@ -68,6 +68,9 @@ describe("p2p-token-escrow", () => {
       })
       .signers([maker])
       .rpc({commitment: "confirmed"})
+
+    const escrowVault = await getOrCreateAssociatedTokenAccount(conn, maker, mintMaker, escrowPDA, true);
+    should().equal(escrowVault.amount, BigInt(maker_offer), "Tokens did not transfer to vault");
   });
 
 
@@ -122,14 +125,16 @@ describe("p2p-token-escrow", () => {
 
     const escrowPDA = getEscrowPDA(maker.publicKey, seed);
     const escrowVaultPDA = getAssociatedTokenAddressSync(mintMaker, escrowPDA, true);
-    
+     
     await program.methods
     .take(new anchor.BN(seed), new anchor.BN(maker_offer), new anchor.BN(maker_ask))
     .accountsStrict({
       taker: taker.publicKey,
-      takerAta: getAssociatedTokenAddressSync(mintTaker, taker.publicKey),
+      takerAtaFrom: getAssociatedTokenAddressSync(mintTaker, taker.publicKey),
+      takerAtaTo: getAssociatedTokenAddressSync(mintMaker, taker.publicKey),
       maker: maker.publicKey,
-      makerAta: getAssociatedTokenAddressSync(mintMaker, maker.publicKey),
+      makerAtaFrom: getAssociatedTokenAddressSync(mintMaker, maker.publicKey),
+      makerAtaTo: getAssociatedTokenAddressSync(mintTaker, maker.publicKey),
       escrow: escrowPDA,
       escrowVault: escrowVaultPDA,
       mintMaker,
@@ -141,6 +146,13 @@ describe("p2p-token-escrow", () => {
     })
     .signers([taker])
     .rpc({commitment: "confirmed"});
+
+    // Validation
+    const makerAtaTo = await getOrCreateAssociatedTokenAccount(conn, maker, mintTaker, maker.publicKey);
+    const takerAtaTo = await getOrCreateAssociatedTokenAccount(conn, taker, mintMaker, taker.publicKey);
+
+    should().equal(makerAtaTo.amount, BigInt(maker_ask), "Maker did not get their tokens");
+    should().equal(takerAtaTo.amount, BigInt(maker_offer), "Taker did not get their tokens");
   });
 
   async function airdrop(to: PublicKey, lamports: number) {
