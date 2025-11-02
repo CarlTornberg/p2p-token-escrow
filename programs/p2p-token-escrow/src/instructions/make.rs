@@ -1,5 +1,5 @@
 use anchor_lang::prelude::*;
-use anchor_spl::{associated_token::AssociatedToken, token_interface::*};
+use anchor_spl::{associated_token::AssociatedToken, token_interface::{self, *}};
 
 use crate::{Escrow, ESCROW_SEED};
 
@@ -24,6 +24,21 @@ pub fn create_make(ctx: Context<CreateMake>, seed: u64, maker_offer: u64, maker_
         escrow.maker_offer,
         escrow.mint_maker.key(),
     ); 
+
+    // Transfer funds to vault
+    let cpi = token_interface::TransferChecked {
+        from: ctx.accounts.maker_ata.to_account_info(),
+        mint: ctx.accounts.mint_maker.to_account_info(),
+        to: ctx.accounts.escrow_vault.to_account_info(),
+        authority: ctx.accounts.maker.to_account_info(),
+    };
+    let ctx_transfer = CpiContext::new(
+        ctx.accounts.mint_maker_token_program.to_account_info(), 
+        cpi);
+    token_interface::transfer_checked(
+        ctx_transfer, 
+        maker_offer, 
+        ctx.accounts.mint_maker.decimals)?;
 
     Ok(())
 }
