@@ -9,11 +9,12 @@ pub fn take_make(ctx: Context<TakeMake>, seed: u64, maker_offer: u64, maker_ask:
     require_eq!(ctx.accounts.escrow.maker_ask, maker_ask, EscrowError::MakeAndTakeAmountMissmatch);
     require_eq!(ctx.accounts.escrow.maker_offer, maker_offer, EscrowError::MakeAndTakeAmountMissmatch);
 
+    msg!("Transfer {} from taker to maker", maker_ask);
     // Transfer from taker to maker
     let cpi_ttm = token_interface::TransferChecked {
-        from: ctx.accounts.taker_ata.to_account_info(),
+        from: ctx.accounts.taker_ata_from.to_account_info(),
         mint: ctx.accounts.mint_taker.to_account_info(),
-        to: ctx.accounts.maker_ata.to_account_info(),
+        to: ctx.accounts.maker_ata_to.to_account_info(),
         authority: ctx.accounts.taker.to_account_info(),
     };
     let ctx_ttm = CpiContext::new(
@@ -21,11 +22,45 @@ pub fn take_make(ctx: Context<TakeMake>, seed: u64, maker_offer: u64, maker_ask:
         cpi_ttm);
     token_interface::transfer_checked(ctx_ttm, maker_ask, ctx.accounts.mint_taker.decimals)?;
 
-    // Transfer from maker to taker
-
-    // Close escrow
+    msg!("Transfer {} from maker to taker (in vault: {})", maker_offer, ctx.accounts.escrow_vault.amount);
+    // Transfer from escrow vault to taker
+    let cpi_evtt = token_interface::TransferChecked {
+        from: ctx.accounts.escrow_vault.to_account_info(),
+        mint: ctx.accounts.mint_maker.to_account_info(),
+        to: ctx.accounts.taker_ata_to.to_account_info(),
+        authority: ctx.accounts.escrow.to_account_info(), 
+    };
+    let signers_seeds: &[&[&[u8]]] = &[&[
+        ESCROW_SEED,
+        &ctx.accounts.maker.key().to_bytes(),
+        &seed.to_le_bytes(),
+        &[ctx.bumps.escrow]
+    ]];
+    let ctx_evtt = CpiContext::new(
+        ctx.accounts.mint_maker_token_program.to_account_info(), 
+        cpi_evtt)
+        .with_signer(signers_seeds);
+    token_interface::transfer_checked(
+        ctx_evtt, 
+        maker_offer,
+        ctx.accounts.mint_maker.decimals)?;
 
     // Close escrow vault
+    let cpi_close_vault = token_interface::CloseAccount {
+        account: ctx.accounts.escrow_vault.to_account_info(),
+        destination: ctx.accounts.maker.to_account_info(),
+        authority: ctx.accounts.escrow.to_account_info(),
+    };
+    let signers_seeds: &[&[&[u8]]] = &[&[
+        ESCROW_SEED,
+        &ctx.accounts.maker.key().to_bytes(),
+        &seed.to_le_bytes(),
+        &[ctx.bumps.escrow]
+    ]];
+    let ctx_close_vault = CpiContext::new(
+        ctx.accounts.mint_maker_token_program.to_account_info(), 
+        cpi_close_vault).with_signer(signers_seeds);
+    token_interface::close_account(ctx_close_vault)?;
 
     Ok(())
 }
@@ -38,7 +73,7 @@ pub struct TakeMake<'info> {
     taker: Signer<'info>,
 
     /// CHECK: By PDA of escrow
-    #[account()]
+    #[account(mut)]
     maker: AccountInfo<'info>,
     
     #[account(
@@ -48,10 +83,16 @@ pub struct TakeMake<'info> {
         associated_token::authority = taker,
         associated_token::token_program = mint_taker_token_program,
     )]
-    taker_ata: InterfaceAccount<'info, TokenAccount>,
+    taker_ata_from: InterfaceAccount<'info, TokenAccount>,
 
-    // taker receiving ata
-    // address the maker deposits to the taker
+    #[account(
+        init_if_needed,
+        payer = taker,
+        associated_token::mint = mint_maker,
+        associated_token::authority = taker,
+        associated_token::token_program = mint_maker_token_program,
+    )]
+    taker_ata_to: InterfaceAccount<'info, TokenAccount>,
 
     #[account(
         mut,
@@ -59,10 +100,16 @@ pub struct TakeMake<'info> {
         associated_token::authority = maker,
         associated_token::token_program = mint_maker_token_program,
     )]
-    maker_ata: InterfaceAccount<'info, TokenAccount>,
+    maker_ata_from: InterfaceAccount<'info, TokenAccount>,
     
-    // maker receiving ata
-    // Address the taker deposits to the maker
+    #[account(
+        init_if_needed,
+        payer = taker,
+        associated_token::mint = mint_taker,
+        associated_token::authority = maker,
+        associated_token::token_program = mint_taker_token_program,
+    )]
+    maker_ata_to: InterfaceAccount<'info, TokenAccount>,
 
     #[account(
         mut,
@@ -71,6 +118,7 @@ pub struct TakeMake<'info> {
         has_one = mint_taker_token_program,
         seeds = [ESCROW_SEED, maker.key().as_ref(), seed.to_le_bytes().as_ref()],
         bump,
+        close = maker,
     )]
     escrow: Account<'info, Escrow>,
 
