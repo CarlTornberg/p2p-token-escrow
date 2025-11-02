@@ -9,13 +9,12 @@ skip-lint = false
 p2p_token_escrow = "ChDn1PMciMVbLKoQXe2qHo6HtLCikFsDaKC7fJgfaPNc"
 
 [programs.localnet]
-p2p_token_escrow = "BNVdmmxsCQiyPkTEFGg7SxkuRWZ2MiMyYamQnYu2wiPN"
 
 [registry]
 url = "https://api.apr.dev"
 
 [provider]
-cluster = "devnet"
+cluster = "localnet"
 wallet = "~/.config/solana/devkey-bytes.json"
 
 [scripts]
