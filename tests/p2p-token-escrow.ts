@@ -21,6 +21,22 @@ describe("p2p-token-escrow", () => {
   const seed: number = 0;
   const maker_ask: number = 20;
 
+  // try {
+  //   const devkeyPath = homedir() + "/.config/solana/devkey.json";
+  //   const outputPath = homedir() + "/.config/solana/devkey-bytes.json";
+  //   const pk = readFileSync(devkeyPath, 'utf-8').trim();
+// 
+//     const bs58 = require('bs58');
+//     const fs = require('fs');
+//     const b = bs58.decode(pk);
+//     const j = new Uint8Array(b.buffer, b.byteOffset, b.byteLength / Uint8Array.BYTES_PER_ELEMENT);
+//     fs.writeFileSync(outputPath, `[${j}]`);
+//   }
+//   catch (e) {
+//     should().fail(e);
+//   }
+
+
   it("Init mints", async () => {
     await airdrop(maker.publicKey, LAMPORTS_PER_SOL);
     await airdrop(taker.publicKey, LAMPORTS_PER_SOL);
