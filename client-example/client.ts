@@ -5,6 +5,7 @@ import * as anchor from "@coral-xyz/anchor";
 import type { P2pTokenEscrow } from "../target/types/p2p_token_escrow";
 import idl from "../target/idl/p2p_token_escrow.json";
 import { TOKEN_PROGRAM_ID } from "@coral-xyz/anchor/dist/cjs/utils/token";
+import { off } from "process";
 
 const main = async () => {
   const wallet = new anchor.Wallet(getKeypairFromFile(homedir() + "/.config/solana/dev.json"));
@@ -56,7 +57,7 @@ async function takeMake(program: anchor.Program<P2pTokenEscrow>) {
   const askAmount = new anchor.BN(1);   // How much the maker asks for
   const askMint = getKeypairFromFile(homedir() + "/.config/solana/takerMint.json");   // of which mint
 
-  program.methods
+  const tx = await program.methods
     .take(seed, offerAmount, askAmount)
     .accountsPartial({
       taker: taker.publicKey,
@@ -67,6 +68,26 @@ async function takeMake(program: anchor.Program<P2pTokenEscrow>) {
       mintTakerTokenProgram: TOKEN_PROGRAM_ID,
     })
     .rpc({commitment: "confirmed"});
+
+  console.log(tx);
+}
+
+async function refund(program: anchor.Program<P2pTokenEscrow>){
+  const maker = getKeypairFromFile(homedir() + "/.config/solana/maker.json");
+  const offerMint = getKeypairFromFile(homedir() + "/.config/solana/makerMint.json"); // of which mint
+  
+  const seed = new anchor.BN(0);
+  const tx = await program.methods
+  .refund(seed)
+  .accounts({
+    maker: maker.publicKey, 
+    mint: offerMint.publicKey,
+    tokenProgram: TOKEN_PROGRAM_ID
+  })
+  .signers([maker])
+  .rpc({commitment: "confirmed"});
+
+  console.log(tx);
 }
 
 main().catch(console.error);
