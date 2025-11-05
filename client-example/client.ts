@@ -5,8 +5,6 @@ import * as anchor from "@coral-xyz/anchor";
 import type { P2pTokenEscrow } from "../target/types/p2p_token_escrow";
 import idl from "../target/idl/p2p_token_escrow.json";
 import { TOKEN_PROGRAM_ID } from "@coral-xyz/anchor/dist/cjs/utils/token";
-import { program } from "@coral-xyz/anchor/dist/cjs/native/system";
-
 
 const main = async () => {
   const wallet = new anchor.Wallet(getKeypairFromFile(homedir() + "/.config/solana/dev.json"));
@@ -16,11 +14,12 @@ const main = async () => {
   const program = new anchor.Program<P2pTokenEscrow>(idl as P2pTokenEscrow, provider);
   
   await createMake(program);
+
+  await takeMake(program);
 };
 
 async function createMake(program: anchor.Program<P2pTokenEscrow>) {
   const maker = getKeypairFromFile(homedir() + "/.config/solana/maker.json");
-
 
   const seed = new anchor.BN(0);
 
