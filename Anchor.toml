@@ -9,13 +9,14 @@ skip-lint = false
 p2p_token_escrow = "ChDn1PMciMVbLKoQXe2qHo6HtLCikFsDaKC7fJgfaPNc"
 
 [programs.localnet]
+p2p_token_escrow = "ChDn1PMciMVbLKoQXe2qHo6HtLCikFsDaKC7fJgfaPNc"
 
 [registry]
 url = "https://api.apr.dev"
 
 [provider]
-cluster = "localnet"
-wallet = "~/.config/solana/devkey-bytes.json"
+cluster = "devnet"
+wallet = "~/.config/solana/dev.json"
 
 [scripts]
 test = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 \"tests/**/*.ts\""
