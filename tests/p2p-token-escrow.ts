@@ -2,7 +2,7 @@ import * as anchor from "@coral-xyz/anchor";
 import { Program } from "@coral-xyz/anchor";
 import { P2pTokenEscrow } from "../target/types/p2p_token_escrow";
 import { Keypair, LAMPORTS_PER_SOL, PublicKey } from "@solana/web3.js"
-import { ASSOCIATED_TOKEN_PROGRAM_ID, createMint, getAssociatedTokenAddressSync, getOrCreateAssociatedTokenAccount, mintTo, TOKEN_PROGRAM_ID } from "@solana/spl-token"
+import { ASSOCIATED_TOKEN_PROGRAM_ID, createMint, getAccount, getAssociatedTokenAddressSync, getOrCreateAssociatedTokenAccount, mintTo, TOKEN_PROGRAM_ID } from "@solana/spl-token"
 import { SYSTEM_PROGRAM_ID } from "@coral-xyz/anchor/dist/cjs/native/system";
 import { should } from "chai";
 
@@ -144,12 +144,11 @@ describe("p2p-token-escrow", () => {
      
     await program.methods
     .take(new anchor.BN(seed), new anchor.BN(maker_offer), new anchor.BN(maker_ask))
-    .accountsStrict({
+    .accountsPartial({
       taker: taker.publicKey,
       takerAtaFrom: getAssociatedTokenAddressSync(mintTaker, taker.publicKey),
       takerAtaTo: getAssociatedTokenAddressSync(mintMaker, taker.publicKey),
       maker: maker.publicKey,
-      makerAtaFrom: getAssociatedTokenAddressSync(mintMaker, maker.publicKey),
       makerAtaTo: getAssociatedTokenAddressSync(mintTaker, maker.publicKey),
       escrow: escrowPDA,
       escrowVault: escrowVaultPDA,
