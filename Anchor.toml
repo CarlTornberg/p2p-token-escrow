@@ -15,7 +15,7 @@ p2p_token_escrow = "ChDn1PMciMVbLKoQXe2qHo6HtLCikFsDaKC7fJgfaPNc"
 url = "https://api.apr.dev"
 
 [provider]
-cluster = "devnet"
+cluster = "localnet"
 wallet = "~/.config/solana/dev.json"
 
 [scripts]
